@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Role, AuthState } from '../types';
 import { BRAND_NAME } from '../constants';
-import { LogOut, Home, Users, Briefcase, Settings, BarChart3, ShieldCheck } from 'lucide-react';
+import { LogOut, Home, Users, Settings, BarChart3, ShieldCheck, Menu } from 'lucide-react';
 
 interface LayoutProps {
   auth: AuthState;
@@ -31,9 +31,9 @@ export const Layout: React.FC<LayoutProps> = ({ auth, onLogout, children }) => {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Sidebar */}
-      <aside className="w-72 bg-slate-900 text-slate-300 hidden lg:flex flex-col sticky top-0 h-screen shadow-2xl">
+      <aside className="w-72 bg-slate-900 text-slate-300 hidden lg:flex flex-col sticky top-0 h-screen shadow-2xl z-50">
         <div className="p-10">
-          <div className="text-2xl font-black text-white flex items-center gap-3 italic">
+          <div className="text-2xl font-black text-white flex items-center gap-3 italic cursor-pointer" onClick={() => navigate('/')}>
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
               <span className="text-white text-lg">FB</span>
             </div>
@@ -42,7 +42,7 @@ export const Layout: React.FC<LayoutProps> = ({ auth, onLogout, children }) => {
           <div className="mt-4 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500">
-              {isClient ? 'Client Security' : 'Expert Command'}
+              {isClient ? 'Secure Portal' : 'Expert System'}
             </span>
           </div>
         </div>
@@ -67,7 +67,7 @@ export const Layout: React.FC<LayoutProps> = ({ auth, onLogout, children }) => {
         <div className="p-8 mt-auto">
           <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 shrink-0">
                 {auth.user.name[0]}
               </div>
               <div className="flex-1 overflow-hidden">
@@ -86,24 +86,33 @@ export const Layout: React.FC<LayoutProps> = ({ auth, onLogout, children }) => {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-white border-b border-slate-100 h-20 flex items-center justify-between px-10 sticky top-0 z-40">
-          <div className="lg:hidden text-xl font-black text-blue-600 italic">{BRAND_NAME}</div>
-          <div className="text-slate-500 text-sm font-bold flex items-center gap-2">
-            Professional Environment <span className="text-slate-300">|</span> <span className="text-slate-900">{auth.user.name}</span>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 h-20 flex items-center justify-between px-6 md:px-10 sticky top-0 z-40">
+          <div className="lg:hidden flex items-center gap-3">
+            <Menu className="w-6 h-6 text-slate-600" />
+            <div className="text-xl font-black text-blue-600 italic">{BRAND_NAME}</div>
           </div>
+          
+          <div className="hidden md:flex items-center gap-2 text-slate-500 text-sm font-bold">
+            <span className="text-slate-300">Section:</span> 
+            <span className="text-slate-900">
+              {navItems.find(i => i.path === location.pathname)?.label || 'Dashboard'}
+            </span>
+          </div>
+
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
+            <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
                <ShieldCheck className="w-4 h-4 text-blue-500" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Encrypted</span>
+               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 hidden sm:inline">Professional Security</span>
             </div>
           </div>
         </header>
-        <div className="p-8 md:p-12 max-w-[1600px] w-full mx-auto">
+
+        <main className="p-6 md:p-12 max-w-[1600px] w-full mx-auto">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

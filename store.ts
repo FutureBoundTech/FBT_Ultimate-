@@ -1,14 +1,15 @@
 
 import { Client, User, Role, LeadStatus, ServiceSector, CallStatus } from './types';
 
-const CLIENTS_KEY = 'fbt_clients_v3';
-const USERS_KEY = 'fbt_users_v3';
+const CLIENTS_KEY = 'fbt_v4_clients';
+const USERS_KEY = 'fbt_v4_users';
 
 export const initialUsers: User[] = [
-  { id: 'admin-1', name: 'FBT Admin', email: 'admin@futurebound.tech', role: Role.ADMIN },
-  { id: 'sales-1', name: 'John Sales', email: 'john@sales.com', role: Role.SALES },
-  { id: 'agent-1', name: 'Sarah CA', email: 'sarah@agent.com', role: Role.AGENT, sector: ServiceSector.IT_RETURN },
-  { id: 'agent-2', name: 'Mike GST', email: 'mike@agent.com', role: Role.AGENT, sector: ServiceSector.GST },
+  { id: 'admin-1', name: 'FBT Master Admin', email: 'admin@futurebound.tech', role: Role.ADMIN },
+  { id: 'sales-1', name: 'Sales Agent Alpha', email: 'sales1@fbt.com', role: Role.SALES },
+  { id: 'sales-2', name: 'Sales Agent Beta', email: 'sales2@fbt.com', role: Role.SALES },
+  { id: 'agent-1', name: 'Sarah (CA - IT Expert)', email: 'sarah@fbt.com', role: Role.AGENT, sector: ServiceSector.IT_RETURN },
+  { id: 'agent-2', name: 'Mike (GST Specialist)', email: 'mike@fbt.com', role: Role.AGENT, sector: ServiceSector.GST },
 ];
 
 export const initialClients: Client[] = [
@@ -16,18 +17,19 @@ export const initialClients: Client[] = [
     id: 'c-1',
     name: 'Alice Johnson',
     email: 'alice@client.com',
-    phone: '555-0101',
+    phone: '9876543210',
     password: 'password123',
     source: 'Website Registration',
     status: LeadStatus.QUALIFIED,
     callStatus: CallStatus.INTERESTED,
     sector: ServiceSector.IT_RETURN,
     assignedAgentId: 'agent-1',
-    notes: ['Self-registered for IT Return'],
+    notes: ['Direct registration for IT Return'],
     messages: [],
     documents: [],
+    itData: { incomeSalary: 850000, incomeHouse: 0, incomeOther: 12000, deduction80C: 150000, deduction80D: 25000, taxPaid: 45000 },
     lastUpdated: new Date().toISOString(),
-    progress: 10
+    progress: 25
   }
 ];
 
@@ -49,20 +51,44 @@ export const setStoredUsers = (users: User[]) => {
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
 };
 
-// Round-Robin Logic for Sales
-export const distributeLeadsToSales = (newClients: Client[], salesUsers: User[]) => {
-  if (salesUsers.length === 0) return newClients;
-  return newClients.map((client, index) => ({
-    ...client,
-    assignedSalesId: salesUsers[index % salesUsers.length].id
-  }));
+/**
+ * CIRCULAR ASSIGNMENT LOGIC
+ * Assigns a lead to the next agent in sequence for that sector
+ */
+export const getNextAgentForSector = (sector: ServiceSector): string | undefined => {
+  const users = getStoredUsers();
+  const clients = getStoredClients();
+  const sectorAgents = users.filter(u => u.role === Role.AGENT && u.sector === sector);
+  
+  if (sectorAgents.length === 0) return undefined;
+
+  // Find how many clients have been assigned to this sector to determine the next index
+  const previousAssignments = clients.filter(c => c.sector === sector && c.assignedAgentId).length;
+  const nextIndex = previousAssignments % sectorAgents.length;
+  
+  return sectorAgents[nextIndex].id;
 };
 
-// Round-Robin Logic for Agents per Sector
-export const getNextAgentForSector = (sector: ServiceSector, clients: Client[], agents: User[]): string | undefined => {
-  const sectorAgents = agents.filter(a => a.role === Role.AGENT && a.sector === sector);
-  if (sectorAgents.length === 0) return undefined;
+/**
+ * SALES CHUNKING LOGIC
+ * Filters leads for sales persons based on unique 20-unit chunks
+ */
+export const getLeadsForSalesPerson = (salesUserId: string, allClients: Client[]): Client[] => {
+  const users = getStoredUsers();
+  const salesUsers = users.filter(u => u.role === Role.SALES);
+  const salesIndex = salesUsers.findIndex(u => u.id === salesUserId);
   
-  const lastAssignedIndex = clients.filter(c => c.sector === sector && c.assignedAgentId).length;
-  return sectorAgents[lastAssignedIndex % sectorAgents.length].id;
+  if (salesIndex === -1) return [];
+
+  const unassignedLeads = allClients.filter(c => c.status === LeadStatus.NEW || !c.assignedAgentId);
+  const chunkSize = 20;
+  
+  // If there are enough leads to support chunking
+  if (unassignedLeads.length >= salesUsers.length * chunkSize) {
+    const start = salesIndex * chunkSize;
+    return unassignedLeads.slice(start, start + chunkSize);
+  }
+  
+  // Random/Fair Distribution if pool is small
+  return unassignedLeads.filter((_, idx) => idx % salesUsers.length === salesIndex);
 };

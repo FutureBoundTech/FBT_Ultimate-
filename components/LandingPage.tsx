@@ -1,12 +1,16 @@
 
 import React, { useState } from 'react';
 import { SERVICES, BRAND_NAME, TEAM_QUALITIES } from '../constants';
-import { ChevronRight, ArrowRight, CheckCircle, Mail, Phone, MapPin, X } from 'lucide-react';
+import { ChevronRight, ArrowRight, CheckCircle, Mail, Phone, MapPin, X, Shield, UserCog, Briefcase } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getStoredClients, setStoredClients, getStoredUsers, getNextAgentForSector } from '../store';
 import { Client, LeadStatus, CallStatus, ServiceSector } from '../types';
 
-export const LandingPage: React.FC = () => {
+interface LandingPageProps {
+  onLogin?: (email: string) => boolean;
+}
+
+export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
   const [showRegister, setShowRegister] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', sector: ServiceSector.IT_RETURN });
@@ -15,10 +19,9 @@ export const LandingPage: React.FC = () => {
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     const clients = getStoredClients();
-    const users = getStoredUsers();
     
-    // Auto-qualify self-registered users directly to agents
-    const assignedAgentId = getNextAgentForSector(formData.sector, clients, users);
+    // Auto-qualify self-registered users directly to agents via Circular Logic
+    const assignedAgentId = getNextAgentForSector(formData.sector);
     
     const newClient: Client = {
       id: `reg-${Date.now()}`,
@@ -47,28 +50,40 @@ export const LandingPage: React.FC = () => {
     }, 2000);
   };
 
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleDemoLogin = (email: string) => {
+    if (onLogin) {
+      onLogin(email);
+      navigate('/dashboard');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white selection:bg-blue-100">
       {/* Navigation */}
-      <nav className="flex items-center justify-between px-6 py-6 max-w-7xl mx-auto border-b border-slate-100">
-        <div className="text-2xl font-bold text-blue-600 flex items-center gap-2">
+      <nav className="flex items-center justify-between px-6 py-6 max-w-7xl mx-auto border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
+        <div className="text-2xl font-black text-blue-600 flex items-center gap-2 italic cursor-pointer" onClick={() => window.scrollTo(0,0)}>
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <span className="text-white text-lg font-black italic">FB</span>
           </div>
           {BRAND_NAME}
         </div>
-        <div className="hidden md:flex gap-8 font-medium text-slate-600">
-          <a href="#services" className="hover:text-blue-600">Services</a>
-          <a href="#about" className="hover:text-blue-600">Why Us</a>
-          <a href="#contact" className="hover:text-blue-600">Contact</a>
+        <div className="hidden md:flex gap-10 font-bold text-slate-600 text-sm">
+          <button onClick={() => scrollTo('services')} className="hover:text-blue-600 transition-colors">Services</button>
+          <button onClick={() => scrollTo('about')} className="hover:text-blue-600 transition-colors">Why Us</button>
+          <button onClick={() => scrollTo('contact')} className="hover:text-blue-600 transition-colors">Contact</button>
         </div>
         <div className="flex gap-4">
-          <Link to="/login" className="text-slate-600 px-5 py-2.5 rounded-full text-sm font-semibold hover:text-blue-600 transition-all">
-            Login
+          <Link to="/login" className="text-slate-600 px-6 py-3 rounded-full text-sm font-black hover:text-blue-600 transition-all uppercase tracking-widest">
+            Client Portal
           </Link>
           <button 
             onClick={() => setShowRegister(true)}
-            className="bg-slate-900 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-800 transition-all shadow-lg"
+            className="bg-slate-900 text-white px-7 py-3 rounded-full text-sm font-black hover:bg-blue-600 transition-all shadow-xl hover:shadow-blue-200"
           >
             Register Now
           </button>
@@ -76,77 +91,80 @@ export const LandingPage: React.FC = () => {
       </nav>
 
       {/* Hero */}
-      <section className="relative px-6 pt-20 pb-32 max-w-7xl mx-auto text-center overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 w-full max-w-4xl aspect-square bg-blue-50/50 rounded-full blur-3xl opacity-50" />
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-bold mb-8 animate-bounce">
-          <CheckCircle className="w-4 h-4"/> Certified Professionals & CAs
+      <section className="relative px-6 pt-24 pb-40 max-w-7xl mx-auto text-center overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 w-full max-w-5xl aspect-square bg-blue-50/50 rounded-full blur-[120px] opacity-60" />
+        <div className="inline-flex items-center gap-2 px-5 py-2 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest mb-10 animate-fade-in">
+          <CheckCircle className="w-4 h-4"/> Certified Professionals & CAs Team
         </div>
-        <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-tight mb-6">
-          Scale Your <span className="text-blue-600">Financial</span> <br />Future with Tech.
+        <h1 className="text-6xl md:text-8xl font-black text-slate-900 tracking-tighter leading-[0.9] mb-8">
+          The <span className="text-blue-600">Future</span> of <br />Financial Compliance.
         </h1>
-        <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-10">
-          Future Bound Tech combines professional expertise with modern management to handle your IT Returns, GST, and Insurance needs.
+        <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
+          Future Bound Tech combines elite human expertise with a high-intelligence dashboard for your IT Returns, GST, and LIC management.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button 
             onClick={() => setShowRegister(true)}
-            className="w-full sm:w-auto bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto bg-blue-600 text-white px-10 py-5 rounded-3xl text-lg font-black hover:bg-blue-700 shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-3 active:scale-95"
           >
-            Start Your Filing <ArrowRight className="w-5 h-5" />
+            Start Your Filing <ArrowRight className="w-6 h-6" />
           </button>
-          <a href="#services" className="w-full sm:w-auto bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-full text-lg font-bold hover:bg-slate-50 transition-all text-center">
-            Explore Services
-          </a>
+          <Link to="/login" className="w-full sm:w-auto bg-white border-2 border-slate-100 text-slate-700 px-10 py-5 rounded-3xl text-lg font-bold hover:bg-slate-50 transition-all text-center">
+            Login to Dashboard
+          </Link>
         </div>
       </section>
 
-      {/* About Section - Team Qualities */}
-      <section id="about" className="py-24 px-6 max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">Empowered by Professional Experts</h2>
-          <p className="text-slate-500 max-w-2xl mx-auto">Our team consists of certified Chartered Accountants and finance specialists dedicated to your growth.</p>
+      {/* About Section */}
+      <section id="about" className="py-32 px-6 max-w-7xl mx-auto border-t border-slate-50">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl font-black text-slate-900 tracking-tight">Our Professional Bench</h2>
+          <p className="text-slate-500 max-w-2xl mx-auto mt-4 font-medium">Future Bound Tech is powered by licensed experts using the latest fintech standards.</p>
         </div>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-10">
           {TEAM_QUALITIES.map((quality, i) => (
-            <div key={i} className="p-8 bg-slate-50 rounded-3xl border border-slate-100 hover:bg-white hover:shadow-xl transition-all group">
-              <div className="mb-6 p-4 bg-white w-fit rounded-2xl group-hover:bg-blue-50 transition-colors shadow-sm">
+            <div key={i} className="p-10 bg-slate-50 rounded-[3rem] border border-slate-100 hover:bg-white hover:shadow-2xl hover:shadow-slate-200/50 transition-all group">
+              <div className="mb-8 p-5 bg-white w-fit rounded-2xl group-hover:bg-blue-50 transition-colors shadow-sm">
                 {quality.icon}
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">{quality.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{quality.desc}</p>
+              <h3 className="text-2xl font-black text-slate-900 mb-4">{quality.title}</h3>
+              <p className="text-slate-500 text-sm leading-relaxed font-medium">{quality.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Services Grid */}
-      <section id="services" className="bg-slate-900 py-24 px-6 text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl -mr-48 -mt-48" />
+      <section id="services" className="bg-slate-900 py-32 px-6 text-white overflow-hidden relative rounded-t-[4rem]">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[150px] -mr-64 -mt-64" />
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Core Financial Services</h2>
-            <p className="text-slate-400">Streamlined solutions for modern individuals and businesses.</p>
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-black tracking-tight mb-4 uppercase italic">Elite Services</h2>
+            <p className="text-slate-400 font-medium">Seamless, Tech-Driven Financial Management.</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {SERVICES.map((s) => (
-              <div key={s.id} className="bg-white/5 backdrop-blur-lg p-8 rounded-[2.5rem] border border-white/10 hover:border-blue-500/50 transition-all group">
-                <div className="mb-6 p-4 bg-blue-600/20 w-fit rounded-2xl group-hover:bg-blue-600 transition-colors">
+              <div key={s.id} className="bg-white/5 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 hover:border-blue-500/50 transition-all group flex flex-col">
+                <div className="mb-8 p-5 bg-blue-600/20 w-fit rounded-2xl group-hover:bg-blue-600 transition-colors">
                   {s.icon}
                 </div>
-                <h3 className="text-2xl font-bold mb-4">{s.title}</h3>
-                <p className="text-slate-400 mb-6 text-sm leading-relaxed">{s.longDescription}</p>
-                <ul className="space-y-3 mb-8">
+                <h3 className="text-3xl font-black mb-4">{s.title}</h3>
+                <p className="text-slate-400 mb-8 text-sm leading-relaxed font-medium flex-1">{s.longDescription}</p>
+                <ul className="space-y-4 mb-10">
                   {s.features.map((f, fi) => (
-                    <li key={fi} className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                      <CheckCircle className="w-4 h-4 text-blue-500" /> {f}
+                    <li key={fi} className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-300">
+                      <CheckCircle className="w-5 h-5 text-blue-500" /> {f}
                     </li>
                   ))}
                 </ul>
                 <button 
-                  onClick={() => setShowRegister(true)}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold transition-all text-sm"
+                  onClick={() => {
+                    setFormData({...formData, sector: s.id as ServiceSector});
+                    setShowRegister(true);
+                  }}
+                  className="w-full py-5 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black transition-all text-sm uppercase tracking-widest shadow-xl shadow-blue-900/40"
                 >
-                  Select Service
+                  Request {s.title}
                 </button>
               </div>
             ))}
@@ -155,112 +173,157 @@ export const LandingPage: React.FC = () => {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-24 px-6 max-w-7xl mx-auto">
-        <div className="bg-slate-50 rounded-[3rem] p-8 md:p-16 flex flex-col md:flex-row gap-12 border border-slate-100 shadow-sm">
+      <section id="contact" className="py-32 px-6 max-w-7xl mx-auto">
+        <div className="bg-slate-50 rounded-[4rem] p-8 md:p-20 flex flex-col lg:flex-row gap-16 border border-slate-100 shadow-sm">
           <div className="flex-1">
-            <h2 className="text-4xl font-bold text-slate-900 mb-6">Get In Touch</h2>
-            <p className="text-slate-500 mb-10 leading-relaxed">Have a specific question? Our compliance team is here to provide clarity on your tax and insurance matters.</p>
-            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-blue-600"><Mail /></div>
+            <h2 className="text-5xl font-black text-slate-900 tracking-tight mb-8 uppercase italic">Get In Touch</h2>
+            <p className="text-slate-500 mb-12 text-lg font-medium leading-relaxed">Questions about compliance or your unique tax situation? Our senior team is available for professional consultation.</p>
+            <div className="space-y-8">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-md text-blue-600"><Mail className="w-7 h-7" /></div>
                 <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Email Us</div>
-                  <div className="font-bold text-slate-900">support@futurebound.tech</div>
+                  <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Electronic Mail</div>
+                  <div className="text-xl font-black text-slate-900">support@futurebound.tech</div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-indigo-600"><Phone /></div>
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-md text-indigo-600"><Phone className="w-7 h-7" /></div>
                 <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Call Center</div>
-                  <div className="font-bold text-slate-900">+91 98765 43210</div>
+                  <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Corporate Line</div>
+                  <div className="text-xl font-black text-slate-900">+91 98765 43210</div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-emerald-600"><MapPin /></div>
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-md text-emerald-600"><MapPin className="w-7 h-7" /></div>
                 <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Corporate HQ</div>
-                  <div className="font-bold text-slate-900">Tech Park, Bangalore, India</div>
+                  <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">India Headquarters</div>
+                  <div className="text-xl font-black text-slate-900">Tech Corridor, Bangalore</div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex-1 bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
-            <h3 className="text-xl font-bold mb-6">Send Message</h3>
-            <div className="space-y-4">
-              <input type="text" placeholder="Full Name" className="w-full p-4 bg-slate-50 rounded-xl outline-none focus:ring-2 ring-blue-500" />
-              <input type="email" placeholder="Email Address" className="w-full p-4 bg-slate-50 rounded-xl outline-none focus:ring-2 ring-blue-500" />
-              <textarea placeholder="How can we help?" rows={4} className="w-full p-4 bg-slate-50 rounded-xl outline-none focus:ring-2 ring-blue-500 resize-none" />
-              <button className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all">Submit Inquiry</button>
+          <div className="flex-1 bg-white p-12 rounded-[3rem] shadow-2xl border border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16" />
+            <h3 className="text-2xl font-black mb-8 relative z-10">Send Direct Inquiry</h3>
+            <div className="space-y-5 relative z-10">
+              <input type="text" placeholder="Your Name" className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold transition-all" />
+              <input type="email" placeholder="Corporate Email" className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold transition-all" />
+              <textarea placeholder="How can our CA team assist you?" rows={4} className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold transition-all resize-none" />
+              <button className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">Submit to Experts</button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* INTERNAL STAFF ACCESS SECTION (Bottom of Landing Page) */}
+      <section className="bg-slate-50 py-24 px-6 border-t border-slate-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-4">
+            <div>
+              <h2 className="text-2xl font-black text-slate-900 italic uppercase">Internal Staff & Expert Access</h2>
+              <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Authorized Personnel Only &bull; Future Bound Tech Protocol</p>
+            </div>
+            <div className="flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 shadow-sm">
+              <Shield className="w-4 h-4"/> Multi-Factor Active
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { label: 'Admin Terminal', desc: 'Full System Control & User Management', email: 'admin@futurebound.tech', icon: <UserCog className="w-6 h-6"/> },
+              { label: 'Agent Workspace', desc: 'Direct CA & Expert Compliance Portal', email: 'sarah@fbt.com', icon: <Briefcase className="w-6 h-6"/> },
+              { label: 'Sales Pipeline', desc: 'Lead Management & Conversion Suite', email: 'sales1@fbt.com', icon: <ArrowRight className="w-6 h-6"/> }
+            ].map((staff, i) => (
+              <button 
+                key={i}
+                onClick={() => handleDemoLogin(staff.email)}
+                className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-2xl hover:border-blue-600/50 transition-all text-left group flex flex-col"
+              >
+                <div className="mb-6 p-4 bg-slate-50 text-slate-900 w-fit rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  {staff.icon}
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-2">{staff.label}</h3>
+                <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">{staff.desc}</p>
+                <div className="mt-auto flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest group-hover:translate-x-1 transition-transform">Enter Portal &rarr;</span>
+                  <span className="text-[9px] text-slate-300 font-mono">{staff.email}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
       
-      <footer className="text-center py-12 border-t border-slate-100 text-slate-400 text-sm">
-        &copy; {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
+      <footer className="text-center py-16 bg-white border-t border-slate-50 text-slate-400 text-sm font-bold uppercase tracking-widest">
+        &copy; {new Date().getFullYear()} {BRAND_NAME} &bull; Internal System Access Available Above
       </footer>
 
       {/* Registration Modal */}
       {showRegister && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in duration-300">
             {regSuccess ? (
-              <div className="p-16 text-center space-y-4">
-                <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="w-10 h-10" />
+              <div className="p-20 text-center space-y-6">
+                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner shadow-emerald-200">
+                  <CheckCircle className="w-12 h-12" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900">Registered!</h3>
-                <p className="text-slate-500 font-medium italic">Redirecting you to your professional dashboard...</p>
+                <h3 className="text-4xl font-black text-slate-900 italic uppercase">Success!</h3>
+                <p className="text-slate-500 font-bold tracking-tight">Redirecting to your secured professional workspace...</p>
               </div>
             ) : (
               <>
-                <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                  <h3 className="text-2xl font-black text-slate-900">Join Future Bound Tech</h3>
-                  <button onClick={() => setShowRegister(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+                <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <div>
+                    <h3 className="text-3xl font-black text-slate-900 italic">Join The Future</h3>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Professional Onboarding</p>
+                  </div>
+                  <button onClick={() => setShowRegister(false)} className="p-3 hover:bg-slate-200 rounded-full transition-colors text-slate-400"><X className="w-6 h-6"/></button>
                 </div>
-                <form onSubmit={handleRegister} className="p-8 space-y-6">
+                <form onSubmit={handleRegister} className="p-10 space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">Full Name</label>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Full Name</label>
                       <input 
                         type="text" required value={formData.name}
                         onChange={e => setFormData({...formData, name: e.target.value})}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500" 
+                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold" 
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">Phone Number</label>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Phone Number</label>
                       <input 
                         type="tel" required value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500" 
+                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold" 
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">Email Address</label>
+                    <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Professional Email</label>
                     <input 
                       type="email" required value={formData.email}
                       onChange={e => setFormData({...formData, email: e.target.value})}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500" 
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2 tracking-widest">Requested Service</label>
+                    <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Service Vertical</label>
                     <select 
                       value={formData.sector}
                       onChange={e => setFormData({...formData, sector: e.target.value as ServiceSector})}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 font-bold"
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-black uppercase text-sm tracking-widest"
                     >
-                      <option value={ServiceSector.IT_RETURN}>Income Tax Return Filing</option>
-                      <option value={ServiceSector.GST}>GST Registration & Compliance</option>
-                      <option value={ServiceSector.LIC_POLICY}>LIC Policy Management</option>
+                      <option value={ServiceSector.IT_RETURN}>Income Tax Returns (CA)</option>
+                      <option value={ServiceSector.GST}>GST Registration & Filing</option>
+                      <option value={ServiceSector.LIC_POLICY}>LIC & Wealth Management</option>
                     </select>
                   </div>
-                  <button className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-2 group">
-                    Confirm Service Request <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform"/>
+                  <button className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black uppercase tracking-[0.2em] hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all flex items-center justify-center gap-3 active:scale-95 group">
+                    Confirm Request <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform"/>
                   </button>
-                  <p className="text-center text-xs text-slate-400">By registering, you agree to our Terms of Service and Privacy Policy.</p>
+                  <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+                    Encrypted submission &bull; Future Bound Tech Protocol
+                  </p>
                 </form>
               </>
             )}

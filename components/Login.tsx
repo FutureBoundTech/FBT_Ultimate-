@@ -15,7 +15,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     e.preventDefault();
     const success = onLogin(email);
     if (!success) {
-      setError('Invalid credentials. Please check the demo accounts below.');
+      setError('Invalid credentials. Please verify your corporate email or use staff access.');
     }
   };
 
@@ -29,7 +29,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
             {BRAND_NAME}
           </div>
-          <h1 className="text-2xl font-black text-slate-900">Professional Access</h1>
+          <h1 className="text-2xl font-black text-slate-900">Portal Access</h1>
           <p className="text-slate-500 mt-2 font-medium">Securing the financial future of our members</p>
         </div>
 
@@ -39,7 +39,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           
           <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Corporate or Client Email</label>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Email Address</label>
               <div className="relative">
                  <input
                   type="email"
@@ -47,7 +47,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-5 pr-12 py-4 rounded-2xl border-2 border-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all placeholder:text-slate-300 font-bold"
-                  placeholder="name@futurebound.tech"
+                  placeholder="Enter your registered email"
                 />
                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-200" />
               </div>
@@ -61,23 +61,23 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
 
             <button className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black hover:bg-slate-800 transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3 group">
-              Confirm Access <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              Login to Dashboard <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </form>
 
           <div className="mt-12 pt-10 border-t border-slate-50">
             <div className="flex items-center gap-2 text-blue-600 font-black text-[10px] uppercase tracking-widest mb-6">
-              <Info className="w-4 h-4" /> System Demo Entry
+              <Info className="w-4 h-4" /> Quick Staff Access
             </div>
             <div className="grid grid-cols-1 gap-3 text-sm">
                {[
                  { label: 'FBT Admin', email: 'admin@futurebound.tech' },
-                 { label: 'IT Expert (CA)', email: 'sarah@agent.com' },
-                 { label: 'Registered Client', email: 'alice@client.com' }
+                 { label: 'Expert CA (Sarah)', email: 'sarah@fbt.com' },
+                 { label: 'Sales Executive', email: 'sales1@fbt.com' }
                ].map(demo => (
                  <button 
                   key={demo.email}
-                  onClick={() => setEmail(demo.email)} 
+                  onClick={() => onLogin(demo.email)} 
                   className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 hover:bg-blue-600 hover:text-white transition-all group border border-slate-100"
                  >
                    <span className="font-black text-slate-600 group-hover:text-white">{demo.label}</span>

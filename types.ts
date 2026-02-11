@@ -47,6 +47,15 @@ export interface Document {
   url?: string;
 }
 
+export interface ITData {
+  incomeSalary: number;
+  incomeHouse: number;
+  incomeOther: number;
+  deduction80C: number;
+  deduction80D: number;
+  taxPaid: number;
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -62,6 +71,7 @@ export interface Client {
   notes: string[];
   messages: Message[];
   documents: Document[];
+  itData?: ITData;
   lastUpdated: string;
   progress: number;
 }
