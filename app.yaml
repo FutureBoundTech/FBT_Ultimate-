@@ -1,0 +1,16 @@
+runtime: nodejs20
+env: standard
+instance_class: F1
+
+env_variables:
+  MONGODB_URI: "mongodb+srv://basha:king@basha.vrlvzbl.mongodb.net/FBT-finance"
+  PORT: "3001"
+  # Update this with your Vercel frontend URL(s) - comma separated for multiple
+  CORS_ORIGIN: "https://your-app.vercel.app,https://your-app-git-main-username.vercel.app"
+
+automatic_scaling:
+  min_idle_instances: 0
+  max_idle_instances: 1
+  min_pending_latency: 30ms
+  max_pending_latency: automatic
+  max_concurrent_requests: 80

@@ -1,65 +1,13 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { SERVICES, BRAND_NAME, TEAM_QUALITIES } from '../constants';
-import { ChevronRight, ArrowRight, CheckCircle, Mail, Phone, MapPin, X, Shield, UserCog, Briefcase } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { getStoredClients, setStoredClients, getStoredUsers, getNextAgentForSector } from '../store';
-import { Client, LeadStatus, CallStatus, ServiceSector } from '../types';
+import { CheckCircle, Mail, Phone, MapPin, Shield, UserCog, Briefcase } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-interface LandingPageProps {
-  onLogin?: (email: string) => boolean;
-}
-
-export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
-  const [showRegister, setShowRegister] = useState(false);
-  const [regSuccess, setRegSuccess] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', sector: ServiceSector.IT_RETURN });
-  const navigate = useNavigate();
-
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    const clients = getStoredClients();
-    
-    // Auto-qualify self-registered users directly to agents via Circular Logic
-    const assignedAgentId = getNextAgentForSector(formData.sector);
-    
-    const newClient: Client = {
-      id: `reg-${Date.now()}`,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      password: 'password123',
-      source: 'Direct Registration',
-      status: LeadStatus.QUALIFIED,
-      callStatus: CallStatus.INTERESTED,
-      sector: formData.sector,
-      assignedAgentId: assignedAgentId,
-      notes: [`Self-registered for ${formData.sector}`],
-      messages: [],
-      documents: [],
-      lastUpdated: new Date().toISOString(),
-      progress: 5
-    };
-
-    setStoredClients([...clients, newClient]);
-    setRegSuccess(true);
-    setTimeout(() => {
-      setShowRegister(false);
-      setRegSuccess(false);
-      navigate('/login');
-    }, 2000);
-  };
-
+export const LandingPage: React.FC = () => {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleDemoLogin = (email: string) => {
-    if (onLogin) {
-      onLogin(email);
-      navigate('/dashboard');
-    }
   };
 
   return (
@@ -81,12 +29,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           <Link to="/login" className="text-slate-600 px-6 py-3 rounded-full text-sm font-black hover:text-blue-600 transition-all uppercase tracking-widest">
             Client Portal
           </Link>
-          <button 
-            onClick={() => setShowRegister(true)}
+          <Link 
+            to="/register"
             className="bg-slate-900 text-white px-7 py-3 rounded-full text-sm font-black hover:bg-blue-600 transition-all shadow-xl hover:shadow-blue-200"
           >
             Register Now
-          </button>
+          </Link>
         </div>
       </nav>
 
@@ -103,12 +51,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           Future Bound Tech combines elite human expertise with a high-intelligence dashboard for your IT Returns, GST, and LIC management.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button 
-            onClick={() => setShowRegister(true)}
+          <Link 
+            to="/register"
             className="w-full sm:w-auto bg-blue-600 text-white px-10 py-5 rounded-3xl text-lg font-black hover:bg-blue-700 shadow-[0_20px_40px_-15px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-3 active:scale-95"
           >
-            Start Your Filing <ArrowRight className="w-6 h-6" />
-          </button>
+            Start Your Filing <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+          </Link>
           <Link to="/login" className="w-full sm:w-auto bg-white border-2 border-slate-100 text-slate-700 px-10 py-5 rounded-3xl text-lg font-bold hover:bg-slate-50 transition-all text-center">
             Login to Dashboard
           </Link>
@@ -157,15 +105,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                     </li>
                   ))}
                 </ul>
-                <button 
-                  onClick={() => {
-                    setFormData({...formData, sector: s.id as ServiceSector});
-                    setShowRegister(true);
-                  }}
-                  className="w-full py-5 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black transition-all text-sm uppercase tracking-widest shadow-xl shadow-blue-900/40"
+                <Link 
+                  to="/register"
+                  className="w-full py-5 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black transition-all text-sm uppercase tracking-widest shadow-xl shadow-blue-900/40 flex items-center justify-center gap-2"
                 >
                   Request {s.title}
-                </button>
+                </Link>
               </div>
             ))}
           </div>
@@ -215,7 +160,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         </div>
       </section>
 
-      {/* INTERNAL STAFF ACCESS SECTION (Bottom of Landing Page) */}
+      {/* Internal Staff Access Section */}
       <section className="bg-slate-50 py-24 px-6 border-t border-slate-200">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-4">
@@ -229,27 +174,47 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { label: 'Admin Terminal', desc: 'Full System Control & User Management', email: 'admin@futurebound.tech', icon: <UserCog className="w-6 h-6"/> },
-              { label: 'Agent Workspace', desc: 'Direct CA & Expert Compliance Portal', email: 'sarah@fbt.com', icon: <Briefcase className="w-6 h-6"/> },
-              { label: 'Sales Pipeline', desc: 'Lead Management & Conversion Suite', email: 'sales1@fbt.com', icon: <ArrowRight className="w-6 h-6"/> }
-            ].map((staff, i) => (
-              <button 
-                key={i}
-                onClick={() => handleDemoLogin(staff.email)}
-                className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-2xl hover:border-blue-600/50 transition-all text-left group flex flex-col"
-              >
-                <div className="mb-6 p-4 bg-slate-50 text-slate-900 w-fit rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
-                  {staff.icon}
-                </div>
-                <h3 className="text-xl font-black text-slate-900 mb-2">{staff.label}</h3>
-                <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">{staff.desc}</p>
-                <div className="mt-auto flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest group-hover:translate-x-1 transition-transform">Enter Portal &rarr;</span>
-                  <span className="text-[9px] text-slate-300 font-mono">{staff.email}</span>
-                </div>
-              </button>
-            ))}
+            <Link 
+              to="/employee-login"
+              className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-2xl hover:border-blue-600/50 transition-all text-left group flex flex-col"
+            >
+              <div className="mb-6 p-4 bg-slate-50 text-slate-900 w-fit rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <UserCog className="w-6 h-6"/>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2">Admin Terminal</h3>
+              <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">Full System Control & User Management</p>
+              <div className="mt-auto flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest group-hover:translate-x-1 transition-transform">Enter Portal &rarr;</span>
+              </div>
+            </Link>
+
+            <Link 
+              to="/employee-login"
+              className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-2xl hover:border-blue-600/50 transition-all text-left group flex flex-col"
+            >
+              <div className="mb-6 p-4 bg-slate-50 text-slate-900 w-fit rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <Briefcase className="w-6 h-6"/>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2">Agent Workspace</h3>
+              <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">Direct CA & Expert Compliance Portal</p>
+              <div className="mt-auto flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest group-hover:translate-x-1 transition-transform">Enter Portal &rarr;</span>
+              </div>
+            </Link>
+
+            <Link 
+              to="/employee-login"
+              className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-2xl hover:border-blue-600/50 transition-all text-left group flex flex-col"
+            >
+              <div className="mb-6 p-4 bg-slate-50 text-slate-900 w-fit rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <Shield className="w-6 h-6"/>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 mb-2">Sales Pipeline</h3>
+              <p className="text-slate-400 text-xs font-bold leading-relaxed mb-6">Lead Management & Conversion Suite</p>
+              <div className="mt-auto flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest group-hover:translate-x-1 transition-transform">Enter Portal &rarr;</span>
+              </div>
+            </Link>
           </div>
         </div>
       </section>
@@ -257,79 +222,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
       <footer className="text-center py-16 bg-white border-t border-slate-50 text-slate-400 text-sm font-bold uppercase tracking-widest">
         &copy; {new Date().getFullYear()} {BRAND_NAME} &bull; Internal System Access Available Above
       </footer>
-
-      {/* Registration Modal */}
-      {showRegister && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in duration-300">
-            {regSuccess ? (
-              <div className="p-20 text-center space-y-6">
-                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner shadow-emerald-200">
-                  <CheckCircle className="w-12 h-12" />
-                </div>
-                <h3 className="text-4xl font-black text-slate-900 italic uppercase">Success!</h3>
-                <p className="text-slate-500 font-bold tracking-tight">Redirecting to your secured professional workspace...</p>
-              </div>
-            ) : (
-              <>
-                <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                  <div>
-                    <h3 className="text-3xl font-black text-slate-900 italic">Join The Future</h3>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Professional Onboarding</p>
-                  </div>
-                  <button onClick={() => setShowRegister(false)} className="p-3 hover:bg-slate-200 rounded-full transition-colors text-slate-400"><X className="w-6 h-6"/></button>
-                </div>
-                <form onSubmit={handleRegister} className="p-10 space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2 sm:col-span-1">
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Full Name</label>
-                      <input 
-                        type="text" required value={formData.name}
-                        onChange={e => setFormData({...formData, name: e.target.value})}
-                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold" 
-                      />
-                    </div>
-                    <div className="col-span-2 sm:col-span-1">
-                      <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Phone Number</label>
-                      <input 
-                        type="tel" required value={formData.phone}
-                        onChange={e => setFormData({...formData, phone: e.target.value})}
-                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold" 
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Professional Email</label>
-                    <input 
-                      type="email" required value={formData.email}
-                      onChange={e => setFormData({...formData, email: e.target.value})}
-                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-bold" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-400 mb-2 tracking-widest">Service Vertical</label>
-                    <select 
-                      value={formData.sector}
-                      onChange={e => setFormData({...formData, sector: e.target.value as ServiceSector})}
-                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 ring-blue-50 font-black uppercase text-sm tracking-widest"
-                    >
-                      <option value={ServiceSector.IT_RETURN}>Income Tax Returns (CA)</option>
-                      <option value={ServiceSector.GST}>GST Registration & Filing</option>
-                      <option value={ServiceSector.LIC_POLICY}>LIC & Wealth Management</option>
-                    </select>
-                  </div>
-                  <button className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black uppercase tracking-[0.2em] hover:bg-blue-700 shadow-2xl shadow-blue-200 transition-all flex items-center justify-center gap-3 active:scale-95 group">
-                    Confirm Request <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform"/>
-                  </button>
-                  <p className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                    Encrypted submission &bull; Future Bound Tech Protocol
-                  </p>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

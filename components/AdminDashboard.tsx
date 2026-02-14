@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { getStoredClients, getStoredUsers, setStoredClients } from '../store';
+import { getStoredClients, setStoredClients } from '../store';
 import { Client, Role, LeadStatus, ServiceSector, CallStatus } from '../types';
 import { LeadTable } from './LeadTable';
 import { Users, FileUp, PlusCircle, LayoutDashboard, Search, Database } from 'lucide-react';
@@ -10,12 +10,20 @@ export const AdminDashboard: React.FC = () => {
   const [showBulk, setShowBulk] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setClients(getStoredClients());
+    loadClients();
   }, []);
 
-  const handleBulkUpload = () => {
+  const loadClients = async () => {
+    setLoading(true);
+    const data = await getStoredClients();
+    setClients(data);
+    setLoading(false);
+  };
+
+  const handleBulkUpload = async () => {
     const lines = bulkText.trim().split('\n');
     const newClients: Client[] = lines.map((line, idx) => {
       const [name, email, phone] = line.split(',').map(s => s.trim());
@@ -37,9 +45,10 @@ export const AdminDashboard: React.FC = () => {
       };
     });
 
-    const updated = [...newClients, ...clients];
-    setClients(updated);
-    setStoredClients(updated);
+    for (const client of newClients) {
+      await setStoredClients(client);
+    }
+    await loadClients();
     setShowBulk(false);
     setBulkText('');
     alert(`Imported ${newClients.length} leads successfully.`);
@@ -70,39 +79,48 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[
-          { label: 'System Database', value: clients.length, icon: <Database className="text-blue-600" />, sub: 'Total Clients' },
-          { label: 'Active Pipeline', value: clients.filter(c => c.status === LeadStatus.IN_PROGRESS).length, icon: <LayoutDashboard className="text-indigo-600" />, sub: 'Processing' },
-          { label: 'Staff Online', value: '5/5', icon: <Users className="text-emerald-600" />, sub: 'Full Coverage' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-6">
-            <div className="p-4 bg-slate-50 rounded-2xl">{stat.icon}</div>
-            <div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{stat.label}</div>
-              <div className="text-3xl font-black text-slate-900">{stat.value}</div>
-              <div className="text-xs text-slate-500 font-medium">{stat.sub}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-black text-slate-900">Master Data View</h2>
-          <div className="relative w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search database..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 text-sm"
-            />
-          </div>
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-slate-500">Loading database...</p>
         </div>
-        <LeadTable clients={filteredClients} />
-      </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { label: 'System Database', value: clients.length, icon: <Database className="text-blue-600" />, sub: 'Total Clients' },
+              { label: 'Active Pipeline', value: clients.filter(c => c.status === LeadStatus.IN_PROGRESS).length, icon: <LayoutDashboard className="text-indigo-600" />, sub: 'Processing' },
+              { label: 'Staff Online', value: '5/5', icon: <Users className="text-emerald-600" />, sub: 'Full Coverage' },
+            ].map((stat, i) => (
+              <div key={i} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-6">
+                <div className="p-4 bg-slate-50 rounded-2xl">{stat.icon}</div>
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{stat.label}</div>
+                  <div className="text-3xl font-black text-slate-900">{stat.value}</div>
+                  <div className="text-xs text-slate-500 font-medium">{stat.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-black text-slate-900">Master Data View</h2>
+              <div className="relative w-72">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search database..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 ring-blue-500 text-sm"
+                />
+              </div>
+            </div>
+            <LeadTable clients={filteredClients} />
+          </div>
+        </>
+      )}
 
       {showBulk && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">

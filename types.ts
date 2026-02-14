@@ -47,6 +47,14 @@ export interface Document {
   url?: string;
 }
 
+export interface PrivateNote {
+  note: string;
+  addedBy: string;
+  addedByName: string;
+  addedAt: string;
+  isPrivate: boolean;
+}
+
 export interface ITData {
   incomeSalary: number;
   incomeHouse: number;
@@ -56,12 +64,39 @@ export interface ITData {
   taxPaid: number;
 }
 
+export interface GSTData {
+  gstin: string;
+  businessName: string;
+  businessType: string;
+  turnover: number;
+  registrationType: 'REGULAR' | 'COMPOSITION' | 'UNREGISTERED';
+  filingFrequency: 'MONTHLY' | 'QUARTERLY';
+  lastFilingDate?: string;
+  pendingReturns: number;
+  gstPassword?: string;
+  gstUsername?: string;
+}
+
+export interface LICData {
+  policyNumber: string;
+  policyName: string;
+  sumAssured: number;
+  premium: number;
+  premiumDueDate: string;
+  maturityDate: string;
+  nominee: string;
+  policyType: string;
+}
+
 export interface Client {
   id: string;
   name: string;
   email: string;
   phone: string;
   password?: string;
+  address: string;
+  profession: string;
+  annualIncome: number;
   source: string;
   status: LeadStatus;
   callStatus: CallStatus;
@@ -69,9 +104,12 @@ export interface Client {
   assignedAgentId?: string;
   assignedSalesId?: string;
   notes: string[];
+  privateNotes?: PrivateNote[];
   messages: Message[];
   documents: Document[];
   itData?: ITData;
+  gstData?: GSTData;
+  licData?: LICData;
   lastUpdated: string;
   progress: number;
 }
@@ -80,8 +118,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password?: string;
   role: Role;
   sector?: ServiceSector;
+  phone?: string;
 }
 
 export interface AuthState {

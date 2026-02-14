@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Client, ServiceSector, LeadStatus, User, Message, ITData } from '../types';
-import { getStoredClients, setStoredClients } from '../store';
+import { getStoredClients, updateClient } from '../store';
 import { LeadTable } from './LeadTable';
 import { FileDigit, MessageSquare, Send, ChevronLeft, LayoutGrid, ClipboardCheck, Calculator } from 'lucide-react';
 
@@ -14,34 +14,45 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ currentUser }) =
   const [clients, setClients] = useState<Client[]>([]);
   const [viewMode, setViewMode] = useState<'LIST' | 'WORKSPACE'>('LIST');
   const [msgText, setMsgText] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setClients(getStoredClients());
+    loadClients();
   }, []);
 
-  const handleUpdateIT = (id: string, field: keyof ITData, value: number) => {
-    const updated = clients.map(c => {
-      if (c.id === id) {
-        return {
-          ...c,
-          itData: { ...(c.itData || { incomeSalary: 0, incomeHouse: 0, incomeOther: 0, deduction80C: 0, deduction80D: 0, taxPaid: 0 }), [field]: value },
-          lastUpdated: new Date().toISOString()
-        };
-      }
-      return c;
-    });
-    setClients(updated);
-    setStoredClients(updated);
-    if (selectedClient?.id === id) setSelectedClient(updated.find(u => u.id === id) || null);
+  const loadClients = async () => {
+    setLoading(true);
+    const data = await getStoredClients();
+    setClients(data);
+    setLoading(false);
   };
 
-  const sendMessage = (clientId: string) => {
+  const handleUpdateIT = async (id: string, field: keyof ITData, value: number) => {
+    const client = clients.find(c => c.id === id);
+    if (!client) return;
+    
+    const updatedClient = {
+      ...client,
+      itData: { ...(client.itData || { incomeSalary: 0, incomeHouse: 0, incomeOther: 0, deduction80C: 0, deduction80D: 0, taxPaid: 0 }), [field]: value },
+      lastUpdated: new Date().toISOString()
+    };
+    
+    setClients(clients.map(c => c.id === id ? updatedClient : c));
+    await updateClient(id, updatedClient);
+    if (selectedClient?.id === id) setSelectedClient(updatedClient);
+  };
+
+  const sendMessage = async (clientId: string) => {
     if (!msgText.trim()) return;
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+    
     const newMessage: Message = { id: `msg-${Date.now()}`, senderId: currentUser.id, text: msgText, timestamp: new Date().toISOString() };
-    const updated = clients.map(c => c.id === clientId ? { ...c, messages: [...c.messages, newMessage] } : c);
-    setClients(updated);
-    setStoredClients(updated);
-    if (selectedClient?.id === clientId) setSelectedClient(updated.find(u => u.id === clientId) || null);
+    const updatedClient = { ...client, messages: [...client.messages, newMessage] };
+    
+    setClients(clients.map(c => c.id === clientId ? updatedClient : c));
+    await updateClient(clientId, updatedClient);
+    if (selectedClient?.id === clientId) setSelectedClient(updatedClient);
     setMsgText('');
   };
 
@@ -67,9 +78,9 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ currentUser }) =
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-               <h2 className="text-xl font-black mb-6 flex items-center gap-3"><Calculator className="w-5 h-5 text-blue-600"/> IT Computation Sheet</h2>
-               <div className="grid md:grid-cols-2 gap-8">
-                 <div className="space-y-4">
+                <h2 className="text-xl font-black mb-6 flex items-center gap-3"><Calculator className="w-5 h-5 text-blue-600"/> IT Computation Sheet</h2>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Income Breakdown</label>
                     {['incomeSalary', 'incomeHouse', 'incomeOther'].map(f => (
                       <div key={f} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -82,8 +93,8 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ currentUser }) =
                         />
                       </div>
                     ))}
-                 </div>
-                 <div className="space-y-4">
+                  </div>
+                  <div className="space-y-4">
                     <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Investment Deductions</label>
                     {['deduction80C', 'deduction80D'].map(f => (
                       <div key={f} className="flex justify-between items-center p-3 bg-indigo-50/30 rounded-xl border border-indigo-100">
@@ -96,24 +107,24 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ currentUser }) =
                         />
                       </div>
                     ))}
-                 </div>
-               </div>
+                  </div>
+                </div>
 
-               <div className="mt-8 p-8 bg-slate-900 rounded-[2rem] text-white flex justify-between items-center">
-                  <div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Taxable Income Final</div>
-                    <div className="text-4xl font-black">₹{taxableIncome.toLocaleString()}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Refund/Liability</div>
-                    <div className="text-2xl font-black text-emerald-400">₹0.00</div>
-                  </div>
-               </div>
+                <div className="mt-8 p-8 bg-slate-900 rounded-[2rem] text-white flex justify-between items-center">
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Taxable Income Final</div>
+                      <div className="text-4xl font-black">₹{taxableIncome.toLocaleString()}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Refund/Liability</div>
+                      <div className="text-2xl font-black text-emerald-400">₹0.00</div>
+                    </div>
+                </div>
             </section>
 
             <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-               <h2 className="text-xl font-black mb-6 flex items-center gap-3"><ClipboardCheck className="w-5 h-5 text-indigo-600"/> Document Verification</h2>
-               <div className="space-y-3">
+                <h2 className="text-xl font-black mb-6 flex items-center gap-3"><ClipboardCheck className="w-5 h-5 text-indigo-600"/> Document Verification</h2>
+                <div className="space-y-3">
                   {['Form 16', 'Bank Statement', 'PAN Card', 'Investment Proof'].map(docName => (
                     <div key={docName} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
                       <span className="font-bold text-slate-700">{docName}</span>
@@ -123,7 +134,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ currentUser }) =
                       </div>
                     </div>
                   ))}
-               </div>
+                </div>
             </section>
           </div>
 
@@ -152,20 +163,27 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ currentUser }) =
           <p className="text-slate-500 font-medium">Expert: <span className="text-blue-600 uppercase font-black tracking-widest">{currentUser.sector?.replace('_', ' ')}</span></p>
         </div>
         <div className="bg-white px-8 py-4 rounded-[2rem] shadow-sm border border-slate-100 flex gap-6 items-center">
-          <div className="text-right"><div className="text-[10px] font-black text-slate-400">Assigned Leads</div><div className="text-2xl font-black text-blue-600">{myClients.length}</div></div>
+          <div className="text-right"><div className="text-[10px] font-black text-slate-400">Assigned Leads</div><div className="text-2xl font-black text-blue-600">{loading ? '-' : myClients.length}</div></div>
           <div className="w-[1px] h-10 bg-slate-100"/>
           <div className="text-right"><div className="text-[10px] font-black text-slate-400">Assignment Mode</div><div className="text-xs font-bold text-emerald-600">Circular Logic</div></div>
         </div>
       </header>
 
-      <LeadTable 
-        clients={myClients}
-        actions={(client) => (
-          <button onClick={() => { setSelectedClient(client); setViewMode('WORKSPACE'); }} className="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2">
-            Open Filing Workspace <LayoutGrid className="w-3 h-3"/>
-          </button>
-        )}
-      />
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-slate-500">Loading your assigned clients...</p>
+        </div>
+      ) : (
+        <LeadTable 
+          clients={myClients}
+          actions={(client) => (
+            <button onClick={() => { setSelectedClient(client); setViewMode('WORKSPACE'); }} className="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2">
+              Open Filing Workspace <LayoutGrid className="w-3 h-3"/>
+            </button>
+          )}
+        />
+      )}
     </div>
   );
 };
